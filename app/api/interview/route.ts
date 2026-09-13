@@ -8,8 +8,7 @@ import { QuestionItem, InterviewTurn, TechStack } from "@/lib/types";
 
 export async function GET() {
   const serverKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
-  // Valid Google Gemini API keys typically begin with AIzaSy
-  const hasValidServerKey = Boolean(serverKey && serverKey.startsWith("AIzaSy"));
+  const hasValidServerKey = Boolean(serverKey && serverKey.trim().length > 5);
 
   return NextResponse.json({
     hasServerKey: hasValidServerKey,
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     if (action === "check_key") {
       const serverKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
-      const hasValidServerKey = Boolean(serverKey && serverKey.startsWith("AIzaSy"));
+      const hasValidServerKey = Boolean(serverKey && serverKey.trim().length > 5);
       return NextResponse.json({ hasServerKey: hasValidServerKey });
     }
 
@@ -34,6 +33,7 @@ export async function POST(req: NextRequest) {
         candidateYoE,
         selectedTechStacks,
         previousDomains = [],
+        previousQuestions = [],
         apiKey,
         mode = "ai",
       } = body;
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
         candidateYoE: Number(candidateYoE),
         selectedTechStacks: selectedTechStacks as TechStack[],
         previousDomains: previousDomains as string[],
+        previousQuestions: previousQuestions as string[],
         customApiKey: apiKey,
         mode,
       });

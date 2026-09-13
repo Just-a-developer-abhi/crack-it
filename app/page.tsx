@@ -98,6 +98,7 @@ export default function Home() {
           candidateYoE: config.candidateYoE,
           selectedTechStacks: config.selectedTechStacks,
           previousDomains: [],
+          previousQuestions: [],
           apiKey,
           mode: config.mode,
         }),
@@ -278,6 +279,7 @@ export default function Home() {
     setCurrentTurn(null);
 
     const previousDomains = allTurns.map((t) => t.domain);
+    const previousQuestions = allTurns.map((t) => t.questionText);
 
     try {
       const res = await fetch("/api/interview", {
@@ -289,6 +291,7 @@ export default function Home() {
           candidateYoE,
           selectedTechStacks,
           previousDomains,
+          previousQuestions,
           apiKey,
           mode,
         }),
@@ -337,6 +340,7 @@ export default function Home() {
     setCurrentTurn(null);
 
     const previousDomains = allTurns.map((t) => t.domain);
+    const previousQuestions = allTurns.map((t) => t.questionText);
 
     try {
       const res = await fetch("/api/interview", {
@@ -348,6 +352,7 @@ export default function Home() {
           candidateYoE,
           selectedTechStacks,
           previousDomains,
+          previousQuestions,
           apiKey,
           mode,
         }),

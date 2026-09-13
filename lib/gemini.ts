@@ -42,14 +42,28 @@ export async function craftQuestion(params: {
   candidateYoE: number;
   selectedTechStacks: TechStack[];
   previousDomains: string[];
+  previousQuestions?: string[];
   customApiKey?: string;
   mode?: "ai" | "offline";
 }): Promise<QuestionItem> {
-  const { questionNumber, candidateYoE, selectedTechStacks, previousDomains, customApiKey, mode } =
-    params;
+  const {
+    questionNumber,
+    candidateYoE,
+    selectedTechStacks,
+    previousDomains,
+    previousQuestions = [],
+    customApiKey,
+    mode,
+  } = params;
 
   if (mode === "offline") {
-    return getMockQuestion(questionNumber, candidateYoE, selectedTechStacks, previousDomains);
+    return getMockQuestion(
+      questionNumber,
+      candidateYoE,
+      selectedTechStacks,
+      previousDomains,
+      previousQuestions
+    );
   }
 
   const { ai, model } = getGeminiClient(customApiKey);

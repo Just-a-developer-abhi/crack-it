@@ -6,10 +6,15 @@ import {
   TechStack,
 } from "./types";
 
-export const MOCK_QUESTIONS: Record<
-  "junior" | "mid" | "senior",
-  Array<{ domain: string; questionText: string; focusArea: string; hint: string }>
-> = {
+interface MockQuestionTemplate {
+  domain: string;
+  questionText: string;
+  focusArea: string;
+  hint: string;
+  stacks?: TechStack[];
+}
+
+export const MOCK_QUESTIONS: Record<"junior" | "mid" | "senior", MockQuestionTemplate[]> = {
   junior: [
     {
       domain: "Event Loop & Async Internals",
@@ -67,7 +72,64 @@ export const MOCK_QUESTIONS: Record<
       focusArea: "Full replacement vs partial update semantics and idempotency",
       hint: "PUT is designed as a complete document replacement (idempotent), whereas PATCH represents a set of instructions/modifications.",
     },
+    {
+      domain: "Data Structures & Runtime Complexity",
+      questionText:
+        "When would looking up a key in a Hash Table degrade from O(1) average time complexity to O(n) worst case, and how do modern runtimes prevent hash collision attacks?",
+      focusArea: "Hash collisions, bucket degradation, and treeification",
+      hint: "Think about pathological hash collisions where all keys map to the same bucket, turning the table into a linked list unless balanced trees are used.",
+    },
+    {
+      domain: "Concurrency & Race Conditions",
+      questionText:
+        "What is a 'race condition', and what is the difference between a data race at the memory level and a logical race condition in business workflows?",
+      focusArea: "Data race vs logical race condition and non-deterministic interleaving",
+      hint: "A data race is unsynchronized concurrent memory access; a logical race condition happens when the timing of events causes incorrect system state even if memory is safe.",
+    },
+    {
+      domain: "Caching & Invalidation",
+      questionText:
+        "Why do we say cache invalidation is one of the hardest problems in computer science? What goes wrong when a database write succeeds but cache invalidation fails?",
+      focusArea: "Stale data, dual-write divergence, and eventual consistency lag",
+      hint: "Consider stale reads serving outdated data to users, and race conditions where an old read repopulates the cache after a new write has occurred.",
+    },
+    {
+      domain: "Security & Authentication",
+      questionText:
+        "Where should an authentication JWT or session token be stored on the client side: in localStorage or in an HttpOnly, Secure cookie? What attack vectors differentiate the two?",
+      focusArea: "XSS vs CSRF vulnerability trade-offs in token storage",
+      hint: "LocalStorage is readable by any JavaScript running in the origin (XSS risk); HttpOnly cookies cannot be read by JS but require CSRF protection.",
+    },
+    {
+      domain: "Event Loop & Async Internals",
+      questionText:
+        "In single-threaded runtimes like JavaScript/Node, what happens if a function executes a long-running synchronous calculation (like a CPU-heavy loop)? Why does the whole server stop responding to other users?",
+      focusArea: "Event loop thread starvation and cooperative multitasking",
+      hint: "The main thread cannot pick up incoming I/O events or network packets from the queue until the current synchronous execution stack is completely empty.",
+    },
+    {
+      domain: "Object-Oriented Principles",
+      questionText:
+        "What is the Open-Closed Principle (the 'O' in SOLID), and how can you add a new payment gateway to an existing checkout system without modifying existing classes?",
+      focusArea: "Open-Closed Principle and strategy pattern / polymorphic interfaces",
+      hint: "Design against an interface or abstract contract so new payment providers can be plugged in as new classes without editing existing checkout logic.",
+    },
+    {
+      domain: "Database Fundamentals",
+      questionText:
+        "In relational databases, what is the difference between an INNER JOIN and an OUTER JOIN, and when can an accidental Cartesian product (CROSS JOIN) crash your database?",
+      focusArea: "Join semantics, filtering predicates, and Cartesian explosion",
+      hint: "Missing or non-unique join conditions cause every row in table A to match every row in table B (M x N rows), exhausting memory and temp disk space.",
+    },
+    {
+      domain: "Error Propagation & Handling",
+      questionText:
+        "What is the risk of catching an exception and doing nothing with it (swallowing the error)? How does that affect downstream debugging and system invariants?",
+      focusArea: "Silent error suppression, debugging observability, and broken invariants",
+      hint: "Swallowing errors leaves the system in an inconsistent state while callers assume the operation succeeded, turning a localized error into mysterious downstream bugs.",
+    },
   ],
+
   mid: [
     {
       domain: "Concurrency & Synchronization",
@@ -125,7 +187,64 @@ export const MOCK_QUESTIONS: Record<
       focusArea: "Index prefix order, covering indexes, and bitmap index scans",
       hint: "A composite index sorts by user_id first, then created_at. It enables range scans for a specific user without merging separate index trees.",
     },
+    {
+      domain: "Distributed Transactions & Consistency",
+      questionText:
+        "When an order service needs to update order status and emit an event to a Kafka broker, how do you ensure the database write and the event publish happen atomically without dual-write inconsistency?",
+      focusArea: "Transactional Outbox pattern and dual-write hazard",
+      hint: "Look into the Transactional Outbox pattern: write the event into an 'outbox' table within the same DB transaction, and have a separate relayer publish it to Kafka.",
+    },
+    {
+      domain: "Connection Pooling & Resource Limits",
+      questionText:
+        "What happens when your database connection pool is sized at 200 connections, but under heavy traffic, database latency increases from 5ms to 500ms? How does this cause connection pool starvation?",
+      focusArea: "Connection pool exhaustion, Little's Law, and thread queue buildup",
+      hint: "By Little's Law (Concurrency = Arrival Rate x Latency), 100x latency requires 100x connections. Incoming requests block waiting for a pool connection, exhausting web server threads.",
+    },
+    {
+      domain: "API Rate Limiting & Throttling",
+      questionText:
+        "Compare the Token Bucket and Leaky Bucket rate limiting algorithms. Under what circumstances would you choose Token Bucket over Leaky Bucket for a public REST API?",
+      focusArea: "Burst handling vs steady egress smoothing in rate limiters",
+      hint: "Token Bucket permits controlled bursts of traffic up to bucket capacity; Leaky Bucket strictly smooths output to a constant rate.",
+    },
+    {
+      domain: "Database Concurrency & Isolation",
+      questionText:
+        "What is a 'Phantom Read', and why doesn't standard Repeatable Read isolation always protect against it in PostgreSQL vs MySQL InnoDB?",
+      focusArea: "Isolation levels, phantom reads, and MVCC predicate locks",
+      hint: "A phantom read occurs when a transaction queries a range of rows, and a concurrent transaction inserts a new row that matches the range. MySQL uses next-key locking; PostgreSQL uses serializable snapshot isolation.",
+    },
+    {
+      domain: "Distributed Caching & Coherence",
+      questionText:
+        "If you use both a local in-memory L1 cache (inside each application instance) and a distributed L2 cache (Redis), how do you keep the L1 caches in sync when one instance updates a record?",
+      focusArea: "Multi-tier cache invalidation, Redis Pub/Sub, and short TTLs",
+      hint: "Consider publishing invalidation messages over Redis Pub/Sub so all nodes evict their local L1 copies, combined with aggressive local TTLs.",
+    },
+    {
+      domain: "Resilience & Bulkheading",
+      questionText:
+        "What is the Bulkhead pattern in distributed systems, and how does isolating thread pools or connection pools prevent one misbehaving endpoint from starving the rest of the application?",
+      focusArea: "Resource isolation, bulkhead fault containment, and thread starvation",
+      hint: "Like compartments in a ship, bulkheads dedicate fixed thread pools to distinct dependencies so that a slow third-party API cannot consume all worker threads.",
+    },
+    {
+      domain: "Authentication & Token Revocation",
+      questionText:
+        "If JWTs are stateless and verified via cryptographic signature, how do you immediately revoke a user's access when their account is compromised before the token expires?",
+      focusArea: "Stateless JWT revocation trade-offs, token blacklisting, and short-lived tokens",
+      hint: "Common approaches: maintain a fast distributed Redis revocation list (checked on critical operations), or issue very short-lived access tokens with rotating refresh tokens.",
+    },
+    {
+      domain: "Logging & Distributed Tracing",
+      questionText:
+        "When a single user request traverses 6 different microservices, how do you trace that request's end-to-end latency and pinpoint which downstream call failed?",
+      focusArea: "Distributed tracing, Correlation/Trace IDs, and W3C tracecontext",
+      hint: "Generate a unique Trace ID at the API gateway and propagate it across HTTP headers (W3C tracecontext) so spans can be reconstructed in Jaeger/Zipkin.",
+    },
   ],
+
   senior: [
     {
       domain: "Architectural Trade-offs & Scalability",
@@ -183,41 +302,323 @@ export const MOCK_QUESTIONS: Record<
       focusArea: "Consistent hashing, virtual nodes, and dedicated tenant isolation",
       hint: "A naive tenant_id shard key causes massive hotspotting. Consider compound shard keys or routing whale tenants to dedicated isolated clusters.",
     },
+    {
+      domain: "Storage Engines & Compaction",
+      questionText:
+        "Compare LSM-trees (Log-Structured Merge-trees as in RocksDB/Cassandra) with traditional B+ Trees. Why do LSM-trees offer significantly higher write throughput at the expense of read amplification and background compaction?",
+      focusArea: "Sequential append writes vs random I/O, SSTable levels, and write stalls",
+      hint: "LSM converts random writes into sequential in-memory append logs (MemTable), periodically flushing to immutable SSTables. Read amplification requires checking Bloom filters and multiple SSTable levels.",
+    },
+    {
+      domain: "CAP & PACELC Theorem",
+      questionText:
+        "Explain the PACELC theorem extension to CAP. If a distributed system is operating normally without a network partition (the 'E' part), what trade-off between Latency and Consistency must it still choose?",
+      focusArea: "PACELC trade-offs under normal execution, replication lag, and read quorums",
+      hint: "Even without partitions, if you want immediate strong consistency, your writes must wait for synchronous replication across nodes, directly inflating latency.",
+    },
+    {
+      domain: "Distributed Consensus & Leases",
+      questionText:
+        "In leader-based consensus protocols like Raft, what happens if the current leader experiences a 2-second GC pause? Can two nodes both believe they are the leader simultaneously, and how do leader leases prevent stale reads?",
+      focusArea: "Raft term increments, split brain mitigation, and monotonic leader leases",
+      hint: "Followers timeout and elect a new leader. When the old leader wakes up, it may still accept writes unless it verifies its lease with a quorum before returning.",
+    },
+    {
+      domain: "Database Replication & Lag",
+      questionText:
+        "In an asynchronous Read-Replica database topology, a user updates their profile and immediately refreshes the page, but still sees their old profile. How do you architect Read-Your-Own-Writes consistency without forcing all reads to the primary?",
+      focusArea: "Read-Your-Own-Writes consistency, replication lag, and WAL LSN tracking",
+      hint: "Track the user's latest write LSN (Log Sequence Number) in their session cookie, and route reads to a replica only if its applied LSN >= user's write LSN.",
+    },
+    {
+      domain: "Resilience & Chaos Engineering",
+      questionText:
+        "What is a 'Thundering Herd' problem during a cold restart of a critical microservice, and how do exponential backoff with jitter and cache warming prevent immediate crash loops?",
+      focusArea: "Cold start stampedes, randomized jitter, and graceful degradation",
+      hint: "When a service restarts cold, all pending requests immediately slam the empty cache and un-warmed connection pools. Jitter breaks synchronized retries into a flat distribution.",
+    },
+    {
+      domain: "Security & Cryptographic Architecture",
+      questionText:
+        "When architecting end-to-end data encryption for sensitive customer records, why should you implement envelope encryption with a Key Management Service (KMS) rather than encrypting data directly with a master key?",
+      focusArea: "Envelope encryption, Data Encryption Keys (DEKs), and KMS performance",
+      hint: "KMS cannot encrypt gigabytes of raw data directly (API limits and latency). Envelope encryption generates a fast local DEK per record, and KMS only encrypts the small DEK.",
+    },
+    {
+      domain: "Distributed Queues & Partitioning",
+      questionText:
+        "In Apache Kafka, if you have 12 partitions in a topic and 16 consumer instances in the same consumer group, what happens to the remaining 4 consumers? How do you scale consumer throughput when you hit this limit?",
+      focusArea: "Kafka partition assignment limits and consumer group rebalancing",
+      hint: "Only 1 consumer in a group can read from a given partition; 4 consumers sit completely idle. To scale beyond partition count, you must increase topic partitions or use internal worker pools.",
+    },
+    {
+      domain: "API Gateway & Edge Architecture",
+      questionText:
+        "When migrating from a monolithic API gateway to a Service Mesh architecture with sidecar proxies (like Envoy/Istio), what networking overhead and latency trade-offs do you introduce?",
+      focusArea: "Service mesh sidecar proxy overhead, iptables redirects, and mTLS handshakes",
+      hint: "Every service-to-service call traverses two additional user-space proxy hops (iptables redirect -> Envoy -> wire -> Envoy -> container), adding 1-3ms latency and significant CPU usage.",
+    },
   ],
 };
 
 /**
- * Picks a random/shuffled question from the appropriate tier.
- * Ensures questions appear in a surprising, non-deterministic order.
+ * Tech-Stack Specialized Question Bank
+ * Injected dynamically based on candidate's selected stack.
+ */
+export const STACK_SPECIFIC_QUESTIONS: Record<TechStack, MockQuestionTemplate[]> = {
+  TypeScript: [
+    {
+      domain: "TypeScript Runtime & Type System",
+      questionText:
+        "What is the difference between Structural Typing and Nominal Typing, and why can TypeScript code produce unexpected runtime errors even when the compiler reports zero type errors?",
+      focusArea: "Structural typing, type erasure, and runtime vs compile-time guarantees",
+      hint: "TypeScript types are erased during compilation. At runtime, objects are matched by shape, not nominal declaration, and external API inputs can violate type assertions.",
+    },
+    {
+      domain: "TypeScript Variance & Generics",
+      questionText:
+        "In TypeScript, what is the concept of Covariance vs Contravariance in function parameter types, and why does TypeScript default to bivariant method parameters?",
+      focusArea: "Variance, function subtyping, and strictFunctionTypes",
+      hint: "Functions are contravariant in parameter types (accept wider inputs) and covariant in return types (produce narrower outputs). strictFunctionTypes enforces this for function signatures.",
+    },
+  ],
+  JavaScript: [
+    {
+      domain: "JavaScript Engine & V8 Optimization",
+      questionText:
+        "How do modern JavaScript engines (like V8) optimize object property lookups using Hidden Classes (Shapes) and Inline Caches, and what code pattern causes de-optimization?",
+      focusArea: "V8 Hidden classes, inline caches, and monomorphic vs megamorphic calls",
+      hint: "Dynamically adding properties in different orders creates divergent hidden classes, degrading call sites from fast monomorphic access to slow megamorphic dictionary lookups.",
+    },
+    {
+      domain: "JavaScript Prototype Chain & Closures",
+      questionText:
+        "How does lexical scoping in JavaScript closures interact with the Garbage Collector? When does an inner closure retain memory from variables in an outer function that it doesn't even use?",
+      focusArea: "Closure lexical environment sharing and accidental memory retention",
+      hint: "In V8, all closures in the same scope share a single LexicalEnvironment object. If one closure references a large variable, sibling closures can keep it retained.",
+    },
+  ],
+  NodeJS: [
+    {
+      domain: "Node.js libuv & Threadpool",
+      questionText:
+        "Node.js is often called 'single-threaded', but its runtime utilizes a threadpool via libuv. Which specific operations run on libuv worker threads versus the main event loop thread?",
+      focusArea: "libuv default threadpool (fs, crypto, dns.lookup, zlib) vs async socket polling (epoll/kqueue)",
+      hint: "Network I/O is handled non-blockingly by the OS kernel (epoll/kqueue); file system I/O, DNS lookups, and crypto hashing run on the libuv 4-thread pool.",
+    },
+    {
+      domain: "Node.js Clustering & Worker Threads",
+      questionText:
+        "When scaling a CPU-intensive Node.js microservice across multiple cores, when would you choose the `cluster` module over `worker_threads`, and what is the difference in memory sharing?",
+      focusArea: "Process isolation (cluster) vs shared memory SharedArrayBuffer (worker_threads)",
+      hint: "Cluster forks isolated OS processes sharing listening ports via IPC; worker_threads run inside the same process and can share memory via SharedArrayBuffer.",
+    },
+  ],
+  React: [
+    {
+      domain: "React Internals & Fiber Reconciler",
+      questionText:
+        "What was the architectural motivation behind React's rewrite to the Fiber architecture, and how does Fiber enable time-slicing and interruptible rendering in Concurrent Mode?",
+      focusArea: "Fiber linked-list call stack, cooperative scheduling, and priority lanes",
+      hint: "Old React used a recursive call stack that couldn't be paused. Fiber models the call stack as a virtual linked-list tree that can pause, yield to browser frames, and resume.",
+    },
+    {
+      domain: "React State & Closure Traps",
+      questionText:
+        "What causes a 'stale closure' bug inside a React `useEffect` or `useCallback`, and how does the dependency array ensure functions capture the correct lexical state?",
+      focusArea: "Stale closures, capture value semantics, and reference equality",
+      hint: "Hooks capture state variables by value at the moment the render function runs. If dependencies are omitted, the closure keeps referencing stale values from that render pass.",
+    },
+  ],
+  NextJS: [
+    {
+      domain: "Next.js SSR & Server Components",
+      questionText:
+        "In Next.js App Router, what is the boundary between React Server Components (RSC) and Client Components, and how are Server Components serialized and sent across the wire?",
+      focusArea: "RSC wire protocol, JSON-like serialization, and client bundle zero-cost",
+      hint: "Server Components execute strictly on the server, producing a streaming serialized JSON/flight payload. Their dependencies never get downloaded to the client browser.",
+    },
+    {
+      domain: "Next.js Caching & Revalidation",
+      questionText:
+        "How does Next.js handle Incremental Static Regeneration (ISR), and what happens when 500 concurrent requests hit a page whose `revalidate` timer has expired?",
+      focusArea: "Stale-while-revalidate, background recomputation, and lock synchronization",
+      hint: "ISR serves the stale static page immediately while triggering a background regeneration. Once rebuilt, subsequent requests receive the new HTML.",
+    },
+  ],
+  Python: [
+    {
+      domain: "Python GIL & Concurrency",
+      questionText:
+        "Why does Python's Global Interpreter Lock (GIL) prevent multi-threaded CPU tasks from running in parallel, and how do `multiprocessing` versus `asyncio` solve different concurrency problems?",
+      focusArea: "GIL thread-safety, CPU-bound multiprocessing vs I/O-bound asyncio event loops",
+      hint: "The GIL protects CPython's reference counting memory management. `multiprocessing` spawns distinct processes with separate GILs; `asyncio` cooperatively interleaves single-threaded I/O.",
+    },
+    {
+      domain: "Python Memory & Garbage Collection",
+      questionText:
+        "How does Python's memory manager combine reference counting with a generational cyclic garbage collector? When does reference counting alone fail to free memory?",
+      focusArea: "Reference cycles, gc module generation 0/1/2, and circular self-references",
+      hint: "Reference counting immediately frees memory when count drops to 0, but fails when objects cyclically reference each other (A -> B -> A). The cyclic GC detects isolated reference cycles.",
+    },
+  ],
+  Go: [
+    {
+      domain: "Go Runtime & Goroutine Scheduler",
+      questionText:
+        "How does Go's GMP scheduler (Goroutines, Machines/OS threads, Processors) achieve high concurrency with millions of goroutines while traditional OS threads cap at thousands?",
+      focusArea: "M:N work-stealing scheduler, segmented/resizable 2KB stacks, and preemption",
+      hint: "Goroutines start with tiny 2KB dynamic stacks (vs 2MB OS thread stacks) and multiplex onto M OS threads across P logical processors using work-stealing.",
+    },
+    {
+      domain: "Go Channels & Memory Model",
+      questionText:
+        "What is the difference between buffered and unbuffered Go channels, and what sequence of channel operations produces a permanent goroutine leak?",
+      focusArea: "Unbuffered rendezvous synchronization, buffer deadlocks, and goroutine leaks",
+      hint: "Unbuffered channels require both sender and receiver to synchronize simultaneously. If a sender writes to an unread channel without a receiver, that goroutine blocks in memory forever.",
+    },
+  ],
+  Java: [
+    {
+      domain: "Java Virtual Machine & JMM",
+      questionText:
+        "What does the Java Memory Model (JMM) guarantee with the 'happens-before' relationship, and why is `volatile` required when implementing Double-Checked Locking in Singletons?",
+      focusArea: "Happens-before order, CPU instruction reordering, and volatile memory barriers",
+      hint: "Without volatile, compiler/CPU instruction reordering allows another thread to see an allocated, non-null object reference before its constructor has finished executing.",
+    },
+    {
+      domain: "Java Garbage Collection Collectors",
+      questionText:
+        "Compare the G1 (Garbage-First) collector with ZGC. How does ZGC achieve sub-millisecond pause times regardless of heap size using colored pointers and load barriers?",
+      focusArea: "Concurrent marking, colored pointer references, and concurrent compaction",
+      hint: "ZGC performs almost all phases concurrently with application threads using 4-bit metadata colored pointers and load barriers that intercept stale object references.",
+    },
+  ],
+  ".NET": [
+    {
+      domain: ".NET CLR & Async/Await Internals",
+      questionText:
+        "When an `async Task` method is compiled in C#/.NET, how does Roslyn transform it into a state machine, and how does the SynchronizationContext govern which thread resumes execution?",
+      focusArea: "IAsyncStateMachine, TaskCompletionSource, and ConfigureAwait(false)",
+      hint: "Roslyn generates a compiler struct implementing a state machine. `ConfigureAwait(false)` avoids capturing the UI or ASP.NET synchronization context on resume.",
+    },
+    {
+      domain: ".NET Garbage Collection & LOH",
+      questionText:
+        "In the .NET CLR Garbage Collector, what is the Large Object Heap (LOH), why are objects >= 85,000 bytes allocated directly to it, and why was it historically prone to fragmentation?",
+      focusArea: "LOH allocation threshold, generation 2 sweeps, and compaction overhead",
+      hint: "Large objects are expensive to copy and compact, so LOH is collected with Gen 2 and historically left uncompacted, leading to memory fragmentation unless pooled via ArrayPool.",
+    },
+  ],
+  Angular: [
+    {
+      domain: "Angular Change Detection & Signals",
+      questionText:
+        "How does Angular's traditional Zone.js-based change detection differ from modern Angular Signals, and why do Signals drastically reduce unnecessary component re-renders?",
+      focusArea: "Zone.js monkey-patching vs fine-grained signal reactive graphs",
+      hint: "Zone.js checks the entire component tree top-to-bottom on any asynchronous browser event. Signals create a fine-grained graph where only affected DOM nodes update.",
+    },
+    {
+      domain: "Angular Dependency Injection & Hierarchical Injectors",
+      questionText:
+        "How do Angular's hierarchical injectors determine the lifespan of a service? What happens when a service is provided in `@Component.providers` versus `providedIn: 'root'`?",
+      focusArea: "Root singleton vs component-scoped instances and memory cleanup",
+      hint: "`providedIn: 'root'` creates an app-wide tree-shakeable singleton; `@Component.providers` instantiates a new service per component instance, destroying it when the component unmounts.",
+    },
+  ],
+  "SQL/Databases": [
+    {
+      domain: "Database Indexing & Query Execution",
+      questionText:
+        "What is the difference between a Clustered Index and a Non-Clustered Index, and why does a primary key update in a clustered table cause severe physical disk I/O?",
+      focusArea: "Physical row ordering in leaf pages, secondary index pointer lookups, and page splits",
+      hint: "A clustered index determines the actual physical sorted order of rows on disk. Updating a clustered key forces the row to be moved to a different page, causing page splits and updating all secondary indexes.",
+    },
+    {
+      domain: "Database Transactions & Write-Ahead Logging",
+      questionText:
+        "How does Write-Ahead Logging (WAL) enable relational databases to satisfy the Durability (the 'D' in ACID) without writing every page synchronously to disk on every commit?",
+      focusArea: "Append-only WAL records, fsync checkpoints, and crash recovery redo logs",
+      hint: "Changes are appended sequentially to the WAL and flushed to disk with fsync. Dirty data pages can remain in memory buffer pools and be lazily checkpointed later.",
+    },
+  ],
+};
+
+/**
+ * Fisher-Yates array shuffle in place
+ */
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/**
+ * Picks a non-deterministic, diverse, non-repeating question.
+ * Shuffles across general systems architecture and candidate's chosen tech stacks.
+ * Guarantees zero repeated questions across all 20 turns.
  */
 export function getMockQuestion(
   questionNumber: number,
   yoe: number,
   techStacks: TechStack[],
-  previousDomains: string[]
+  previousDomains: string[] = [],
+  previousQuestions: string[] = []
 ): QuestionItem {
   let tier: "junior" | "mid" | "senior" = "junior";
   if (yoe >= 8) tier = "senior";
   else if (yoe >= 4) tier = "mid";
 
-  const pool = MOCK_QUESTIONS[tier];
+  // 1. Gather all questions from current tier
+  const tierQuestions = [...MOCK_QUESTIONS[tier]];
 
-  // Filter questions whose domains haven't been asked in this session yet
-  const available = pool.filter((q) => !previousDomains.includes(q.domain));
+  // 2. Gather tech-stack specific questions matching candidate selections
+  const stackQuestions: MockQuestionTemplate[] = [];
+  if (Array.isArray(techStacks)) {
+    techStacks.forEach((stack) => {
+      const questionsForStack = STACK_SPECIFIC_QUESTIONS[stack];
+      if (questionsForStack) {
+        stackQuestions.push(...questionsForStack);
+      }
+    });
+  }
 
-  // Randomize selection from available candidates to avoid repetitive order
-  let selected: (typeof pool)[0];
-  if (available.length > 0) {
-    const randomIndex = Math.floor(Math.random() * available.length);
-    selected = available[randomIndex];
+  // Combine and deduplicate
+  const fullCandidatePool = [...tierQuestions, ...stackQuestions];
+
+  // 3. Filter out questions that have ALREADY been asked in this session
+  const cleanPrevQuestions = new Set(previousQuestions.map((q) => q.trim().toLowerCase()));
+  const unaskedQuestions = fullCandidatePool.filter(
+    (q) => !cleanPrevQuestions.has(q.questionText.trim().toLowerCase())
+  );
+
+  // 4. Prioritize unasked domains to ensure topic breadth
+  const cleanPrevDomains = new Set(previousDomains.map((d) => d.trim().toLowerCase()));
+  const unaskedDomainCandidates = unaskedQuestions.filter(
+    (q) => !cleanPrevDomains.has(q.domain.trim().toLowerCase())
+  );
+
+  let selected: MockQuestionTemplate;
+
+  if (unaskedDomainCandidates.length > 0) {
+    // Pick randomly from unasked domain candidates
+    const shuffled = shuffleArray(unaskedDomainCandidates);
+    selected = shuffled[0];
+  } else if (unaskedQuestions.length > 0) {
+    // If all domains were asked at least once, pick from any remaining unasked question
+    const shuffled = shuffleArray(unaskedQuestions);
+    selected = shuffled[0];
   } else {
-    // If all domains have been asked once, pick a random question from pool
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    selected = pool[randomIndex];
+    // Extreme fallback: shuffle the entire pool to guarantee a question
+    const shuffled = shuffleArray(fullCandidatePool);
+    selected = shuffled[0];
   }
 
   return {
-    id: `q-${questionNumber}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    id: `q-${questionNumber}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
     questionNumber,
     domain: selected.domain,
     questionText: selected.questionText,
@@ -288,7 +689,8 @@ export function evaluateMockAnswer(
     "lock", "concurrency", "thread", "atomic", "cache", "memory", "latency",
     "throughput", "retry", "queue", "partition", "event", "async", "buffer",
     "deadlock", "isolation", "transaction", "circuit", "timeout", "idempotent",
-    "quorum", "consensus", "leader", "p99", "cpu", "heap", "leak", "index"
+    "quorum", "consensus", "leader", "p99", "cpu", "heap", "leak", "index",
+    "replica", "sharding", "backpressure", "wal", "btree", "lsm", "cluster"
   ];
 
   const matchedKeywords = technicalKeywords.filter((kw) => cleanText.includes(kw));
@@ -298,129 +700,118 @@ export function evaluateMockAnswer(
   if (wordCount >= 40 && keywordDensity >= 4) {
     score = isFollowUpTurn ? 8 : 7;
   } else if (wordCount >= 25 && keywordDensity >= 2) {
-    score = 6;
+    score = isFollowUpTurn ? 6 : 5;
   } else {
     score = 4;
   }
 
+  const needsProbe = !isFollowUpTurn && score < 7;
+
   return {
     score,
-    isFollowUpNeeded: false,
+    isFollowUpNeeded: needsProbe,
+    followUpQuestion: needsProbe
+      ? `Can you dig deeper into the architectural trade-offs of this approach? What are the latency and data integrity implications if one node or dependency stalls?`
+      : undefined,
     briefFeedback:
       score >= 7
-        ? "Solid technical articulation. You addressed core runtime mechanics and trade-offs."
-        : "Moderate technical grasp. You understand the high-level pattern, but missed critical boundary constraints.",
-    keyPointsCovered:
-      matchedKeywords.length > 0
-        ? matchedKeywords.slice(0, 3).map((kw) => `Addressed ${kw} dynamics`)
-        : ["Discussed general architecture"],
+        ? `Solid explanation addressing ${question.focusArea}. Good conceptual depth.`
+        : `Answer provides partial context on ${question.focusArea}, but lacks discussion of failure scenarios or concurrency edge cases.`,
+    keyPointsCovered: matchedKeywords.length > 0 ? matchedKeywords.slice(0, 3) : ["Basic conceptual overview"],
     missedNuances:
       score < 7
         ? [
-            `Could delve deeper into ${question.focusArea}`,
-            "Explicit failure-mode recovery or contention trade-offs omitted",
+            `Specific operational challenges with ${question.focusArea}`,
+            "High-scale failure recovery and consistency boundaries",
           ]
         : [],
   };
 }
 
 /**
- * Post-interview summary feedback generator for offline mode.
- * Dynamically adjusts overall score based on real scores without arbitrary high minimums.
+ * Generates final feedback report after Question 20.
  */
 export function generateMockFeedback(
   turns: InterviewTurn[],
-  yoe: number,
-  techStacks: TechStack[]
+  candidateYoE: number,
+  selectedTechStacks: TechStack[]
 ): FeedbackReport {
-  const scores = turns
-    .map((t) => t.evaluation?.score ?? 0)
-    .filter((s) => typeof s === "number");
+  const scores = turns.map((t) => t.evaluation?.score ?? 0);
+  const avgScore = scores.reduce((a, b) => a + b, 0) / Math.max(1, scores.length);
+  const readinessRating = Math.round((avgScore / 10) * 100);
 
-  const avgScore =
-    scores.length > 0
-      ? scores.reduce((acc, curr) => acc + curr, 0) / scores.length
-      : 0;
+  const strongAreas: { topic: string; evidence: string; masteryLevel: "High" | "Solid" }[] = [];
+  const areasToImprove: { topic: string; gap: string; whyItMatters: string }[] = [];
 
-  // Strict 0-100 scaling without artificial 62% baseline
-  const overallReadinessScore = Math.min(
-    98,
-    Math.max(0, Math.round(avgScore * 10))
-  );
+  turns.forEach((turn) => {
+    const score = turn.evaluation?.score ?? 0;
+    if (score >= 7 && !strongAreas.some((s) => s.topic === turn.domain)) {
+      strongAreas.push({
+        topic: turn.domain,
+        evidence: `Demonstrated solid architectural depth (${score}/10) with key trade-offs considered.`,
+        masteryLevel: score >= 8 ? "High" : "Solid",
+      });
+    } else if (score <= 5 && !areasToImprove.some((a) => a.topic === turn.domain)) {
+      areasToImprove.push({
+        topic: turn.domain,
+        gap: `Lacked comprehensive analysis of failure modes or contention edge cases (${score}/10).`,
+        whyItMatters: "Essential for building fault-tolerant, high-concurrency production systems.",
+      });
+    }
+  });
 
-  let summaryVerdict = "";
-  if (overallReadinessScore >= 80) {
-    summaryVerdict =
-      "Strong Technical Rigor: You consistently articulated low-level mechanics, concurrency invariants, and trade-off considerations expected for senior engineering loops.";
-  } else if (overallReadinessScore >= 60) {
-    summaryVerdict =
-      "Solid Foundations: You demonstrated reasonable systems awareness, but missed several critical edge cases, contention bottlenecks, and recovery mechanisms.";
-  } else if (overallReadinessScore >= 35) {
-    summaryVerdict =
-      "Needs Deep Technical Preparation: Several questions were passed or answered without sufficient architectural depth. Focus on low-level runtime internals and concurrency primitives.";
-  } else {
-    summaryVerdict =
-      "Unprepared: Multiple questions were skipped or answered without technical substance. Immediate study of core distributed systems, memory, and database internals is strongly advised.";
+  if (strongAreas.length === 0) {
+    strongAreas.push({
+      topic: "Core Foundations",
+      evidence: "Demonstrated baseline understanding of runtime concepts.",
+      masteryLevel: "Solid",
+    });
   }
 
+  if (areasToImprove.length === 0) {
+    areasToImprove.push({
+      topic: "High-Scale Edge Cases",
+      gap: "Further depth needed on distributed partitioning and zero-downtime migrations.",
+      whyItMatters: "Required for senior and staff engineering interviews.",
+    });
+  }
+
+  const verdict =
+    readinessRating >= 80
+      ? "Strong Hire: Exceptional conceptual clarity, failure mode awareness, and concurrency grasp."
+      : readinessRating >= 60
+      ? "Leaning Hire: Solid foundational depth with targeted gaps in high-contention scenarios."
+      : "Needs Further Preparation: Focus on systems internals, concurrency models, and resilient architectures.";
+
   return {
-    overallReadinessScore,
-    summaryVerdict,
-    strongAreas:
-      overallReadinessScore >= 50
-        ? [
-            {
-              topic: "Event Loop & Asynchronous Runtimes",
-              evidence:
-                "Demonstrated understanding of task queues, execution ordering, and non-blocking IO.",
-              masteryLevel: "Solid",
-            },
-            {
-              topic: "Architectural Trade-offs & Resilience",
-              evidence:
-                "Identified common resilience patterns like idempotency and backoff.",
-              masteryLevel: "Solid",
-            },
-          ]
-        : [],
-    areasToImprove: [
-      {
-        topic: "Concurrency Invariants & Contention Bottlenecks",
-        gap: "Light on lock contention thresholds, CPU memory visibility, and lock-free CAS mechanics.",
-        whyItMatters:
-          "Senior interviews heavily test how your architectures survive high-concurrency spikes without corrupting state or deadlocking.",
-      },
-      {
-        topic: "Distributed Consensus & Partition Tolerances",
-        gap: "Need deeper familiarity with quorum math, split-brain mitigation, and leader leases.",
-        whyItMatters:
-          "Mission-critical systems require clear understanding of network partitions and state recovery.",
-      },
-    ],
+    overallReadinessScore: readinessRating,
+    summaryVerdict: verdict,
+    strongAreas: strongAreas.slice(0, 4),
+    areasToImprove: areasToImprove.slice(0, 4),
     targetedActionItems: [
       {
-        category: "Deep Dives",
-        recommendation:
-          "Study optimistic vs pessimistic concurrency controls, CAS loops, and distributed lock mechanics (Redlock / ZooKeeper).",
-        resourcesOrConcepts: [
-          "Optimistic Concurrency Control Contention Limits",
-          "Lock-Free Concurrent Queues & CAS",
-          "Raft Consensus Protocol Internals",
-        ],
+        category: "Concurrency & Contention",
+        recommendation: `Deepen your understanding of lock-free data structures, memory visibility, and contention degradation in ${selectedTechStacks.slice(0, 2).join(" & ")}.`,
+        resourcesOrConcepts: ["Compare-And-Swap (CAS)", "Memory Barriers", "Pessimistic vs Optimistic Locking"],
       },
       {
-        category: "System Design Drills",
-        recommendation:
-          "Practice architecting a zero-downtime database migration under 10k+ continuous write RPS.",
-        resourcesOrConcepts: [
-          "Expand & Contract Schema Migration Pattern",
-          "Dual-Write Consistency with Shadow Verification",
-          "Distributed Idempotency Keys",
-        ],
+        category: "Resilience & Reliability",
+        recommendation: "Design systems with explicit circuit breakers, backpressure, and idempotency guarantees.",
+        resourcesOrConcepts: ["Transactional Outbox", "Token Bucket Throttling", "Stream Backpressure"],
+      },
+      {
+        category: "Database & Storage Scaling",
+        recommendation: "Master query plan analysis, B-Tree vs LSM compaction, and sharding hotspot mitigation.",
+        resourcesOrConcepts: ["Composite Indexing", "Write-Ahead Logging (WAL)", "Virtual Node Partitioning"],
+      },
+      {
+        category: "Senior Interview Calibration",
+        recommendation: `Prepare concrete architectural case studies tailored to ${candidateYoE} YoE expectations.`,
+        resourcesOrConcepts: ["Zero-Downtime Schema Migrations", "Consensus Quorums (Raft)", "Split-Brain Avoidance"],
       },
     ],
-    candidateYoE: yoe,
-    selectedTechStacks: techStacks,
+    candidateYoE,
+    selectedTechStacks,
     totalQuestionsAnswered: turns.length,
   };
 }

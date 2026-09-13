@@ -64,7 +64,7 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
       });
   }, []);
 
-  const hasKeyForAi = Boolean(apiKey && apiKey.trim().startsWith("AIzaSy")) || hasServerKey;
+  const hasKeyForAi = Boolean(apiKey && apiKey.trim().length > 5) || hasServerKey;
   const allowance = checkDailyAllowance(Boolean(apiKey), mode);
 
   const toggleStack = (stack: TechStack) => {
@@ -419,16 +419,16 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={
-                    selectedStacks.length === 0 ||
-                    !allowance.allowed ||
-                    (mode === "ai" && !hasKeyForAi)
-                  }
-                  className="w-full group flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold text-sm sm:text-base transition-all duration-200 shadow-xl shadow-emerald-500/20 active:scale-[0.99]"
+                  disabled={selectedStacks.length === 0 || !allowance.allowed}
+                  className={`w-full group flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 shadow-xl active:scale-[0.99] ${
+                    mode === "ai" && !hasKeyForAi
+                      ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20"
+                      : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/20"
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   <span>
                     {mode === "ai" && !hasKeyForAi
-                      ? "API Key Required for AI Mode (Click to Set Up)"
+                      ? "Set Up AI Key to Start (or Switch to Offline)"
                       : mode === "ai"
                       ? "Start Live AI Mock Interview"
                       : "Start Offline Practice Interview"}

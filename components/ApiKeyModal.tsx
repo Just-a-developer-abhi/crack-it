@@ -38,7 +38,8 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
   if (!isOpen) return null;
 
   const handleSave = () => {
-    onSaveApiKey(keyInput.trim());
+    const cleaned = keyInput.trim().replace(/^["']|["']$/g, "");
+    onSaveApiKey(cleaned);
     setSavedSuccess(true);
     setTimeout(() => {
       setSavedSuccess(false);
@@ -118,7 +119,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
                 Create & Copy Your API Key
               </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
-                Click the blue <strong>&ldquo;Create API key&rdquo;</strong> button, choose your project (or default), and copy the generated key string (starts with <code className="px-1 py-0.5 rounded bg-slate-800 text-emerald-300 font-mono text-[11px]">AIzaSy...</code>).
+                Click the blue <strong>&ldquo;Create API key&rdquo;</strong> button, choose your project (or default), and copy the generated key string.
               </p>
             </div>
           </div>
@@ -135,7 +136,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="AIzaSy..."
+                  placeholder="Paste Gemini API key here..."
                   value={keyInput}
                   onChange={(e) => setKeyInput(e.target.value)}
                   className="w-full pl-3.5 pr-10 py-2.5 rounded-xl bg-slate-900 border border-slate-750 text-xs text-slate-100 placeholder:text-slate-600 font-mono focus:outline-none focus:border-emerald-500"
