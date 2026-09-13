@@ -41,22 +41,31 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Top-Left Brand Logo with layoutId */}
           <div className="flex items-center gap-3">
             {showLogo && (
-              <motion.div
-                layoutId="brand-logo-text"
-                transition={{
-                  type: "spring",
-                  stiffness: 240,
-                  damping: 24,
-                }}
-                className="text-2xl font-bold tracking-tight text-emerald-400 flex items-center cursor-pointer select-none"
+              <div
+                className="flex items-center cursor-pointer select-none"
                 onClick={onReset}
               >
-                <span>Crack</span>
-                <span className="ml-1 text-slate-100">it</span>
-                <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hidden sm:inline-block">
+                <motion.div
+                  layoutId="brand-logo-text"
+                  transition={{
+                    type: "spring",
+                    stiffness: 220,
+                    damping: 24,
+                  }}
+                  className="text-2xl font-extrabold tracking-tight text-emerald-400 flex items-center"
+                >
+                  <span>Crack</span>
+                  <span className="ml-1.5 text-slate-100 font-extrabold">it</span>
+                </motion.div>
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.35, delay: 0.2 }}
+                  className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hidden sm:inline-block"
+                >
                   {mode === "offline" ? "Offline" : "AI Mock"}
-                </span>
-              </motion.div>
+                </motion.span>
+              </div>
             )}
 
             {domain && (

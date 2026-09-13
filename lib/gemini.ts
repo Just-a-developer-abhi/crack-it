@@ -25,8 +25,7 @@ function getGeminiClient(customApiKey?: string): {
     return { ai: null, model: "gemini-2.5-flash" };
   }
 
-  const model =
-    process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
   return {
     ai: new GoogleGenAI({ apiKey }),
@@ -36,7 +35,6 @@ function getGeminiClient(customApiKey?: string): {
 
 /**
  * Agent 1: Question Crafter
- * Strictly avoids coding/syntax tests.
  * Calibrates depth based on Candidate YoE (1-3, 4-7, 8-15).
  */
 export async function craftQuestion(params: {
@@ -57,8 +55,9 @@ export async function craftQuestion(params: {
   const { ai, model } = getGeminiClient(customApiKey);
 
   if (!ai) {
-    console.warn("No Gemini API key configured. Using intelligent question crafter fallback.");
-    return getMockQuestion(questionNumber, candidateYoE, selectedTechStacks, previousDomains);
+    throw new Error(
+      "Gemini API key is not configured. Please add your free API key via 'Set Up AI Key' or switch to Offline Practice Mode."
+    );
   }
 
   let yoeGuidance = "";
@@ -137,16 +136,18 @@ CRITICAL RULES FOR ASKING QUESTIONS LIKE A REAL HUMAN INTERVIEWER:
       focusArea: parsed.focusArea || "Internal Mechanics",
       hint: parsed.hint || "Consider the trade-offs between consistency, latency, and resource contention.",
     };
-  } catch (error) {
-    console.error("Gemini craftQuestion error, falling back to mock:", error);
-    return getMockQuestion(questionNumber, candidateYoE, selectedTechStacks, previousDomains);
+  } catch (error: any) {
+    console.error("Gemini craftQuestion error:", error);
+    throw new Error(
+      `AI Question Crafting Failed: ${error?.message || "Invalid API key or network failure"}. Please check your API key or switch to Offline Mode.`
+    );
   }
 }
 
 /**
  * Agent 2: Answer Evaluator & Follow-Up Driver
- * Evaluates candidate response against technical depth.
- * If answer is vague or misses edge cases, issues a 1-turn follow-up probe.
+ * Strictly evaluates candidate response against technical depth.
+ * Zero tolerance for ignorance or evasive one-liners.
  */
 export async function evaluateAnswer(params: {
   question: QuestionItem;
@@ -166,8 +167,9 @@ export async function evaluateAnswer(params: {
   const { ai, model } = getGeminiClient(customApiKey);
 
   if (!ai) {
-    console.warn("No Gemini API key configured. Using intelligent answer evaluator fallback.");
-    return evaluateMockAnswer(question, answer, isFollowUpTurn);
+    throw new Error(
+      "Gemini API key is not configured. Please add your free API key via 'Set Up AI Key' or switch to Offline Practice Mode."
+    );
   }
 
   const prompt = `You are Agent 2: Answer Evaluator & Follow-Up Driver for "Crack it".
@@ -179,13 +181,25 @@ Is this a follow-up turn? ${isFollowUpTurn ? "YES (Final turn for this question,
 ${priorAnswer ? `Candidate's Initial Response: "${priorAnswer}"` : ""}
 Candidate's Current Answer: "${answer}"
 
-EVALUATION CRITERIA:
-1. Assess technical depth, precision of internal mechanics, edge-case coverage, and trade-off awareness.
-2. If this is NOT a follow-up turn (isFollowUpTurn is false) AND the candidate's answer is brief, missing critical edge cases, or needs deeper probing, set isFollowUpNeeded to true.
-3. FOLLOW-UP QUESTION STYLE: Phrase the follow-up question like a human interviewer digging deeper into their response (e.g. "That makes sense for low contention. But what happens during a traffic burst where 10,000 requests hit that exact same row? How would your solution handle that?"). Keep it to ONE natural, targeted probe.
-4. If this is already a follow-up turn (isFollowUpTurn is true), you MUST set isFollowUpNeeded to false.
-5. Score from 1 to 10 based on candidate YoE calibration.
-6. Provide concise briefFeedback (1-2 sentences), keyPointsCovered (1-3 bullets), and missedNuances (1-3 bullets).`;
+CRITICAL CANDOR, STRICTNESS & REAL-INTERVIEWER RULES:
+1. ZERO TOLERANCE FOR EVASION OR IGNORANCE: If the candidate says "pass", "skip", "I don't know", "idk", "no idea", gives an evasive one-word response, or writes minimal text with no technical substance:
+   - YOU MUST AWARD A SCORE OF 0 OR 1 OUT OF 10.
+   - ABSOLUTELY NEVER offer polite praise. NEVER say "Good starting point", "Solid conceptual grasp", or praise ignorance in any form.
+   - Set isFollowUpNeeded to false (do not waste time probing someone who opted to pass or stated they do not know).
+   - Set briefFeedback to directly state that no technical substance was provided and name the specific architectural mechanism they failed to address.
+   - Set keyPointsCovered to [] (empty array).
+   - Set missedNuances to explicitly list the core mechanisms and trade-offs required at ${candidateYoE} YoE.
+2. RIGOROUS REAL-WORLD SCORING RUBRIC:
+   - 0-1: Skipped, "don't know", evasive, or factually backwards.
+   - 2-4: Superficial buzzwords without explanation of internal mechanics, or severe architectural misconceptions.
+   - 5-6: Partially correct high-level intuition, but missed critical contention bottlenecks, race conditions, or failure modes.
+   - 7-8: Solid, articulate explanation demonstrating internal runtime/distributed mechanics and trade-offs.
+   - 9-10: Staff-level mastery with deep insight into kernel/memory/locking invariants and graceful failure recovery.
+3. FOLLOW-UP PROBE BEHAVIOR:
+   - Only probe (isFollowUpNeeded: true) if the candidate provided a genuine, substantive technical answer that has a specific edge case or contention vulnerability worth drilling into.
+   - Phrase follow-up like a human interviewer (e.g. "That handles low traffic, but what happens during a 10,000 req/sec spike on that exact row?").
+   - If this is already a follow-up turn (isFollowUpTurn is true), you MUST set isFollowUpNeeded to false.
+4. Provide concise briefFeedback (1-2 sentences), keyPointsCovered (1-3 bullets), and missedNuances (1-3 bullets).`;
 
   try {
     const response = await ai.models.generateContent({
@@ -198,12 +212,12 @@ EVALUATION CRITERIA:
           properties: {
             score: {
               type: Type.INTEGER,
-              description: "Score from 1 to 10 evaluating technical depth",
+              description: "Score from 0 to 10 evaluating technical depth (0-1 for pass/don't know/evasion)",
             },
             isFollowUpNeeded: {
               type: Type.BOOLEAN,
               description:
-                "True if answer misses edge cases and this is turn 1; false if solid or already a follow-up turn",
+                "True if answer has substance but misses edge cases and this is turn 1; false if pass, 'don't know', solid, or already a follow-up turn",
             },
             followUpQuestion: {
               type: Type.STRING,
@@ -213,7 +227,7 @@ EVALUATION CRITERIA:
             briefFeedback: {
               type: Type.STRING,
               description:
-                "Concise 1-2 sentence assessment highlighting strengths and gaps",
+                "Concise 1-2 sentence assessment highlighting strengths, gaps, or lack of substance",
             },
             keyPointsCovered: {
               type: Type.ARRAY,
@@ -238,17 +252,20 @@ EVALUATION CRITERIA:
     });
 
     const parsed = JSON.parse(response.text || "{}");
+    const rawScore = typeof parsed.score === "number" ? parsed.score : 5;
     return {
-      score: parsed.score || 7,
+      score: Math.max(0, Math.min(10, rawScore)),
       isFollowUpNeeded: isFollowUpTurn ? false : Boolean(parsed.isFollowUpNeeded),
       followUpQuestion: parsed.followUpQuestion || undefined,
       briefFeedback: parsed.briefFeedback || "Evaluated response depth.",
       keyPointsCovered: parsed.keyPointsCovered || [],
       missedNuances: parsed.missedNuances || [],
     };
-  } catch (error) {
-    console.error("Gemini evaluateAnswer error, falling back to mock:", error);
-    return evaluateMockAnswer(question, answer, isFollowUpTurn);
+  } catch (error: any) {
+    console.error("Gemini evaluateAnswer error:", error);
+    throw new Error(
+      `AI Answer Evaluation Failed: ${error?.message || "Invalid API key or network failure"}. Please check your API key or switch to Offline Mode.`
+    );
   }
 }
 
@@ -273,8 +290,9 @@ export async function generateFeedback(params: {
   const { ai, model } = getGeminiClient(customApiKey);
 
   if (!ai) {
-    console.warn("No Gemini API key configured. Using intelligent feedback analyst fallback.");
-    return generateMockFeedback(turns, candidateYoE, selectedTechStacks);
+    throw new Error(
+      "Gemini API key is not configured. Please add your free API key via 'Set Up AI Key' or switch to Offline Practice Mode."
+    );
   }
 
   const transcriptSummary = turns.map((t, idx) => ({
@@ -284,7 +302,7 @@ export async function generateFeedback(params: {
     answer: t.initialAnswer || "",
     followUpQuestion: t.followUpQuestion || null,
     followUpAnswer: t.followUpAnswer || null,
-    score: t.evaluation?.score || 7,
+    score: t.evaluation?.score ?? 0,
     keyPoints: t.evaluation?.keyPointsCovered || [],
     missed: t.evaluation?.missedNuances || [],
   }));
@@ -376,7 +394,7 @@ Ingest the full transcript and generate an exhaustive, actionable architectural 
     const parsed = JSON.parse(response.text || "{}");
     return {
       overallReadinessScore: parsed.overallReadinessScore || 80,
-      summaryVerdict: parsed.summaryVerdict || "Strong performance across core technical areas.",
+      summaryVerdict: parsed.summaryVerdict || "Technical performance evaluation completed.",
       strongAreas: parsed.strongAreas || [],
       areasToImprove: parsed.areasToImprove || [],
       targetedActionItems: parsed.targetedActionItems || [],
@@ -384,9 +402,10 @@ Ingest the full transcript and generate an exhaustive, actionable architectural 
       selectedTechStacks,
       totalQuestionsAnswered: turns.length,
     };
-  } catch (error) {
-    console.error("Gemini generateFeedback error, falling back to mock:", error);
-    return generateMockFeedback(turns, candidateYoE, selectedTechStacks);
+  } catch (error: any) {
+    console.error("Gemini generateFeedback error:", error);
+    throw new Error(
+      `AI Report Generation Failed: ${error?.message || "Invalid API key or network failure"}. Please check your API key or switch to Offline Mode.`
+    );
   }
 }
-

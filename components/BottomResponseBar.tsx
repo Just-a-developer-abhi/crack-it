@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Mic, MicOff, Send, Sparkles, CornerDownLeft, AlertCircle } from "lucide-react";
+import { Mic, MicOff, Send, Sparkles, AlertCircle, SkipForward } from "lucide-react";
 import {
   isSpeechRecognitionSupported,
   createSpeechRecognizer,
@@ -9,6 +9,7 @@ import {
 
 interface BottomResponseBarProps {
   onSubmit: (text: string) => void;
+  onSkip?: () => void;
   disabled?: boolean;
   placeholder?: string;
   isFollowUp?: boolean;
@@ -16,6 +17,7 @@ interface BottomResponseBarProps {
 
 export const BottomResponseBar: React.FC<BottomResponseBarProps> = ({
   onSubmit,
+  onSkip,
   disabled = false,
   placeholder = "Type your architectural explanation or use voice dictation...",
   isFollowUp = false,
@@ -173,10 +175,23 @@ export const BottomResponseBar: React.FC<BottomResponseBarProps> = ({
             className="flex-1 max-h-[180px] py-2 px-1 text-sm bg-transparent text-slate-100 placeholder:text-slate-500 focus:outline-none resize-none leading-relaxed"
           />
 
-          {/* Character counter & Send Button */}
-          <div className="flex items-center gap-2 shrink-0 pb-1">
+          {/* Action buttons: Skip + Character counter + Send Button */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 pb-1">
+            {onSkip && (
+              <button
+                type="button"
+                onClick={onSkip}
+                disabled={disabled}
+                title="Pass/Skip this question (Awards 0/10)"
+                className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-rose-950/60 text-slate-400 hover:text-rose-400 border border-slate-700 hover:border-rose-800/60 text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 disabled:opacity-40"
+              >
+                <SkipForward size={14} />
+                <span className="hidden sm:inline">Pass</span>
+              </button>
+            )}
+
             <span
-              className={`text-[11px] font-mono transition-colors hidden sm:inline-block ${
+              className={`text-[11px] font-mono transition-colors hidden md:inline-block ${
                 charCount > 150
                   ? "text-emerald-400"
                   : charCount > 0
@@ -201,11 +216,10 @@ export const BottomResponseBar: React.FC<BottomResponseBarProps> = ({
 
         {/* Bottom hint */}
         <div className="flex items-center justify-between mt-1 px-2 text-[10px] text-slate-500">
-          <span>Press <kbd className="px-1 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">Enter</kbd> to submit, <kbd className="px-1 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">Shift+Enter</kbd> for newline</span>
-          <span className="sm:hidden">{charCount} chars</span>
+          <span>Press <kbd className="px-1 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">Enter</kbd> to submit, or click <strong className="text-slate-400">Pass</strong> to skip</span>
+          <span className="md:hidden">{charCount} chars</span>
         </div>
       </div>
     </div>
   );
 };
-

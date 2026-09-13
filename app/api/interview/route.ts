@@ -6,10 +6,27 @@ import {
 } from "@/lib/gemini";
 import { QuestionItem, InterviewTurn, TechStack } from "@/lib/types";
 
+export async function GET() {
+  const serverKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  // Valid Google Gemini API keys typically begin with AIzaSy
+  const hasValidServerKey = Boolean(serverKey && serverKey.startsWith("AIzaSy"));
+
+  return NextResponse.json({
+    hasServerKey: hasValidServerKey,
+    serverKeyConfigured: Boolean(serverKey),
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { action } = body;
+
+    if (action === "check_key") {
+      const serverKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+      const hasValidServerKey = Boolean(serverKey && serverKey.startsWith("AIzaSy"));
+      return NextResponse.json({ hasServerKey: hasValidServerKey });
+    }
 
     if (action === "craft") {
       const {
@@ -106,7 +123,7 @@ export async function POST(req: NextRequest) {
     console.error("API /api/interview error:", error);
     return NextResponse.json(
       { error: error?.message || "Internal server error in multi-agent pipeline" },
-      { status: 500 }
+      { status: 400 }
     );
   }
 }

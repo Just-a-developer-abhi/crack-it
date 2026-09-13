@@ -297,7 +297,15 @@ export const InterviewScreen: React.FC<InterviewScreenProps> = ({
                   <span className="font-semibold text-slate-200">
                     Depth Evaluation: {turn.evaluation.briefFeedback}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full font-mono font-bold text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <span
+                    className={`px-2.5 py-0.5 rounded-full font-mono font-bold text-xs border ${
+                      turn.evaluation.score <= 3
+                        ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                        : turn.evaluation.score <= 6
+                        ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                        : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                    }`}
+                  >
                     Score: {turn.evaluation.score}/10
                   </span>
                 </div>
@@ -372,11 +380,11 @@ export const InterviewScreen: React.FC<InterviewScreenProps> = ({
                       <button
                         type="button"
                         onClick={onSkipQuestion}
-                        title="Pass on this question and proceed"
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 hover:text-rose-400 border border-slate-800 transition text-[11px]"
+                        title="Pass on this question (Awards 0/10)"
+                        className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-950/40 text-rose-300 hover:bg-rose-900/60 hover:text-rose-200 border border-rose-800/50 transition text-xs font-semibold"
                       >
-                        <SkipForward size={14} />
-                        <span className="hidden sm:inline">Pass</span>
+                        <SkipForward size={13} />
+                        <span>Pass</span>
                       </button>
                     )}
                   </div>
@@ -503,7 +511,15 @@ export const InterviewScreen: React.FC<InterviewScreenProps> = ({
                     <span className="font-semibold text-slate-200">
                       Evaluator Assessment: {currentTurn.evaluation.briefFeedback}
                     </span>
-                    <span className="px-2.5 py-1 rounded-full font-mono font-bold text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <span
+                      className={`px-2.5 py-1 rounded-full font-mono font-bold text-xs border ${
+                        currentTurn.evaluation.score <= 3
+                          ? "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                          : currentTurn.evaluation.score <= 6
+                          ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+                          : "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                      }`}
+                    >
                       Score: {currentTurn.evaluation.score}/10
                     </span>
                   </div>
