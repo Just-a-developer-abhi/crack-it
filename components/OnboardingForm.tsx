@@ -47,7 +47,24 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
   ]);
   const [yoe, setYoe] = useState<number>(5);
   const [mode, setMode] = useState<InterviewMode>("ai");
+  const [hasServerKey, setHasServerKey] = useState<boolean>(false);
+  const [isCheckingServerKey, setIsCheckingServerKey] = useState<boolean>(true);
 
+  React.useEffect(() => {
+    fetch("/api/interview")
+      .then((res) => res.json())
+      .then((data) => {
+        setHasServerKey(Boolean(data.hasServerKey));
+      })
+      .catch(() => {
+        setHasServerKey(false);
+      })
+      .finally(() => {
+        setIsCheckingServerKey(false);
+      });
+  }, []);
+
+  const hasKeyForAi = Boolean(apiKey && apiKey.trim().length > 5) || hasServerKey;
   const allowance = checkDailyAllowance(Boolean(apiKey), mode);
 
   const toggleStack = (stack: TechStack) => {
@@ -70,6 +87,10 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedStacks.length === 0 || yoe < 1 || yoe > 15) return;
+    if (mode === "ai" && !hasKeyForAi) {
+      if (onOpenApiKeyModal) onOpenApiKeyModal();
+      return;
+    }
     if (!allowance.allowed) return;
 
     onStartInterview({
@@ -205,6 +226,37 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
                 </div>
               </button>
             </div>
+
+            {/* Missing API Key Warning for AI Mode */}
+            {mode === "ai" && !hasKeyForAi && !isCheckingServerKey && (
+              <div className="mb-6 p-4 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-xs text-amber-200 space-y-2.5 animate-fade-in">
+                <div className="flex items-center gap-2 font-bold text-amber-300">
+                  <AlertCircle size={16} />
+                  <span>Gemini API Key Required for Live AI Mode</span>
+                </div>
+                <p className="leading-relaxed">
+                  Live AI Mode requires a Google Gemini API key to craft dynamic questions and evaluate your architectural explanations. You can enter your free key or switch to Offline Practice Mode with no key needed.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {onOpenApiKeyModal && (
+                    <button
+                      type="button"
+                      onClick={onOpenApiKeyModal}
+                      className="px-3.5 py-1.5 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition"
+                    >
+                      Set Up Free Gemini Key (Takes 60s)
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setMode("offline")}
+                    className="px-3.5 py-1.5 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 transition"
+                  >
+                    Switch to Offline Practice Mode
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Rate limit status / banner */}
             {!allowance.allowed ? (
@@ -368,10 +420,16 @@ export const OnboardingForm: React.FC<OnboardingFormProps> = ({
                 <button
                   type="submit"
                   disabled={selectedStacks.length === 0 || !allowance.allowed}
-                  className="w-full group flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-bold text-sm sm:text-base transition-all duration-200 shadow-xl shadow-emerald-500/20 active:scale-[0.99]"
+                  className={`w-full group flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl font-bold text-sm sm:text-base transition-all duration-200 shadow-xl active:scale-[0.99] ${
+                    mode === "ai" && !hasKeyForAi
+                      ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-amber-500/20"
+                      : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-emerald-500/20"
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   <span>
-                    {mode === "ai"
+                    {mode === "ai" && !hasKeyForAi
+                      ? "Set Up AI Key to Start (or Switch to Offline)"
+                      : mode === "ai"
                       ? "Start Live AI Mock Interview"
                       : "Start Offline Practice Interview"}
                   </span>
